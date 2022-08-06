@@ -7,13 +7,10 @@ const UserProfile = () => {
   const { data: session, status } = useSession()
   const user = session?.user
   const userId= session?.user?.id
-  
   if(userId){
     return (
     <div className='flex items-center'>
-    <div className={`shadow p-2 rounded-full flex `}>
-      <Image src={user?.image} alt={`${user?.name} profile picture`} width={40} height={40}/>
-    </div>
+      <Image width={36} height={36} src={user?.image} alt={`${user?.name} profile picture`} className="rounded-full"/>
     <h3 className='pl-2'>{user?.name}</h3>
   </div>
   )

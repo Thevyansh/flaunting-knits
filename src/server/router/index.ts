@@ -8,8 +8,8 @@ import { adminRouter } from "./admin/product";
 
 export const appRouter = createRouter()
   .transformer(superjson)
-  .merge("example.", productRouter)
-  .merge("user.", userRouter)
+  .merge("products.", productRouter)
+  .merge("users.", userRouter)
   .merge("admin.", adminRouter);
 
 // export type definition of API
