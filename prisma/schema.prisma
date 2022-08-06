@@ -1,0 +1,178 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  // NOTE: When using postgresql, mysql or sqlserver, uncomment the @db.text annotations in model Account below
+  // Further reading: 
+  // https://next-auth.js.org/adapters/prisma#create-the-prisma-schema
+  // https://www.prisma.io/docs/reference/api-reference/prisma-schema-reference#string
+  url      = env("DATABASE_URL")
+}
+
+model Account {
+  id                String  @id @default(auto()) @map("_id") @db.ObjectId
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.String
+  access_token      String? @db.String
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.String
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id            String    @id @default(auto()) @map("_id") @db.ObjectId
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  role          Role      @default(USER)
+
+  defaultAddress Address?
+  addresses      Address[]
+
+  accounts Account[]
+  sessions Session[]
+
+  review Review[]
+  order  Order[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+type Address {
+  fullName     String
+  mobileNumber String
+  addr1        String
+  addr2        String
+  landmark     String?
+  city         String
+  state        String
+  pincode      String
+}
+
+model VerificationToken {
+  identifier String   @id @default(auto()) @map("_id") @db.ObjectId
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Product {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  slug          String   @unique
+  name          String
+  description   String
+  price         Int
+  salePrice     Int
+  featuredImage String
+  images        Image[]
+  tags          String[]
+  sizes         Size[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  Review Review[]
+
+  inventory   Int
+  orderCount  Int        @default(0)
+  Order       Order?     @relation(fields: [orderId], references: [id])
+  orderId     String?    @db.ObjectId
+  Categories  Category[] @relation(fields: [categoryIDs], references: [id])
+  categoryIDs String[]   @db.ObjectId
+}
+
+enum Size {
+  SM
+  M
+  L
+  XL
+  XXL
+}
+
+type Image {
+  link String
+}
+
+model Category {
+  id         String    @id @default(auto()) @map("_id") @db.ObjectId
+  slug       String    @unique
+  name       String
+  productIDs String[]  @db.ObjectId
+  products   Product[] @relation(fields: [productIDs], references: [id])
+}
+
+model Review {
+  id        String  @id @default(auto()) @map("_id") @db.ObjectId
+  message   String
+  rating    Float
+  user      User    @relation(fields: [userId], references: [id])
+  userId    String  @db.ObjectId
+  product   Product @relation(fields: [productId], references: [id])
+  productId String  @db.ObjectId
+}
+
+model Order {
+  id             String         @id @default(auto()) @map("_id") @db.ObjectId
+  products       Product[]
+  trackingId     String?
+  status         orderStatus
+  paymentStatus  PaymentStatus
+  shippingStatus ShippingStatus
+
+  User   User   @relation(fields: [userId], references: [id])
+  userId String @db.ObjectId
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum PaymentStatus {
+  Successfull
+  Failed
+  Pending
+}
+
+enum ShippingStatus {
+  Dispatching
+  Dispatched
+  Shipping
+  Shipped
+  OutForDelivery
+  Delivered
+}
+
+enum orderStatus {
+  Cancelled
+  Pending
+  Successfull
+  Returned
+}
